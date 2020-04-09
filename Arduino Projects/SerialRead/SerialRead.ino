@@ -5,13 +5,14 @@
 #define GREENPIN 10
 #define BLUEPIN  6
 
-// Variable to read incoming serial data into
-int incomingByte;
+// Serial comms
+String command;
 
 void setup() {
 
-  // Initialize serial communication
+  // Initialize serial comms
   Serial.begin(9600);
+
 
   // Setup analog output pins
   pinMode(REDPIN,   OUTPUT);
@@ -21,22 +22,45 @@ void setup() {
 }
 
 void loop() {
-
-  // See if there's incoming serial data
-  if (Serial.available() > 0) {
-    // Read the oldest byte in the serial buffer
-    incomingByte = Serial.read();
-    // if it's a capital H (ASCII 72), start analogRainbowLoop:
-    if (incomingByte == 'H') {
-      analogRainbowLoop();
+  if (Serial.available())
+  {
+    char c = Serial.read();
+    if (c == '\n')
+    {
+      parseCommand(command);
+      command = "";
     }
-    // if it's an L (ASCII 76) turn off LEDs:
-    if (incomingByte == 'L') {
-      analogOff();
+    else
+    {
+      command += c;
     }
   }
-
 }
+
+void parseCommand(String com)
+{
+  String part1;
+  String part2;
+
+  part1 = com.substring(0, com.indexOf(" "));
+  part2 = com.substring(com.indexOf(" ") + 1);
+
+  if (part1.equalsIgnoreCase("pinOn"))
+  {
+    int pin = part2.toInt();
+    digitalWrite(pin, HIGH);
+  }
+  else if (part1.equalsIgnoreCase("pinOff"))
+  {
+    int pin = part2.toInt();
+    digitalWrite(pin, LOW);
+  }
+  else
+  {
+    Serial.println("Command not recognized");
+  }
+}
+
 
 // --------------- Utilities --------------------------------
 
@@ -64,7 +88,7 @@ void analogSolid()
 }
 
 
-void analogRainbowLoop() 
+void analogRainbow() 
 {
   static uint8_t hue;
   hue = hue + 1;
